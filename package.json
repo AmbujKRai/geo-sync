@@ -1,0 +1,25 @@
+{
+    "name": "geo-sync",
+    "version": "1.0.0",
+    "description": "Real-Time Geo-Sync: Tracker & Follower map synchronization app",
+    "scripts": {
+        "dev": "node server.js",
+        "build": "next build",
+        "start": "NODE_ENV=production node server.js"
+    },
+    "dependencies": {
+        "next": "^14.0.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "socket.io": "^4.7.2",
+        "socket.io-client": "^4.7.2",
+        "@react-google-maps/api": "^2.19.3",
+        "express": "^4.18.2",
+        "uuid": "^9.0.0",
+        "clsx": "^2.0.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.0.0",
+        "eslint-config-next": "^14.0.0"
+    }
+}

@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-deep: #050810;
+    --bg-panel: #0a0f1e;
+    --bg-card: #0f1629;
+    --border: #1a2440;
+    --border-bright: #2a3a60;
+    --accent-cyan: #00d4ff;
+    --accent-green: #00ff88;
+    --accent-orange: #ff6b35;
+    --accent-red: #ff3366;
+    --accent-yellow: #ffd700;
+    --text-primary: #e8edf8;
+    --text-secondary: #6a7a9a;
+    --text-dim: #3a4a6a;
+    --tracker-color: #00d4ff;
+    --tracked-color: #00ff88;
+    --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+    --glow-green: 0 0 20px rgba(0, 255, 136, 0.3);
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'Rajdhani', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+}
+
+#__next {
+    height: 100%;
+}
+
+/* Google Maps overrides */
+.gm-style .gm-style-iw-c {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border-bright) !important;
+    color: var(--text-primary) !important;
+}
+
+.gm-ui-hover-effect {
+    filter: invert(1) !important;
+}
+
+/* Style the zoom controls to match dark UI */
+.gm-bundled-control .gmnoprint div {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border-bright) !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-bright);
+    border-radius: 2px;
+}
+
+/* Scanline overlay effect */
+.scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.05) 2px,
+            rgba(0, 0, 0, 0.05) 4px);
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Pulse animation */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-in-up {
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes glitch {
+    0% {
+        text-shadow: 2px 0 var(--accent-cyan), -2px 0 var(--accent-red);
+    }
+
+    20% {
+        text-shadow: -2px 0 var(--accent-cyan), 2px 0 var(--accent-red);
+    }
+
+    40% {
+        text-shadow: 2px 0 var(--accent-red), -2px 0 var(--accent-cyan);
+    }
+
+    60% {
+        text-shadow: none;
+    }
+
+    80% {
+        text-shadow: -2px 0 var(--accent-red), 2px 0 var(--accent-cyan);
+    }
+
+    100% {
+        text-shadow: 2px 0 var(--accent-cyan), -2px 0 var(--accent-red);
+    }
+}
+
+@keyframes data-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes corner-flash {
+
+    0%,
+    100% {
+        border-color: var(--border-bright);
+    }
+
+    50% {
+        border-color: var(--accent-cyan);
+    }
+}
