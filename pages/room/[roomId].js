@@ -20,11 +20,7 @@ const MapView = dynamic(() => import("../../components/MapView"), {
 export default function RoomPage() {
     const router = useRouter();
 
-    // ─── FIX: Don't read router.query until router.isReady ────────────────────
-    // router.query is undefined on the first render in Next.js. Reading it
-    // immediately causes the useEffect to run with undefined roomId/role,
-    // registering socket listeners prematurely and then re-running when the
-    // real values arrive — creating duplicate listener registrations.
+
     const { isReady } = router;
 
     const [connectionStatus, setConnectionStatus] = useState("connecting");
@@ -45,11 +41,7 @@ export default function RoomPage() {
         notifTimerRef.current = setTimeout(() => setNotification(null), 3500);
     }, []);
 
-    // ─── FIX: Socket setup only runs when router is ready ────────────────────
-    // By gating on `router.isReady`, we guarantee roomId and role are real
-    // values before we touch the socket. The cleanup function removes every
-    // listener by reference — the exact same function objects that were added —
-    // so even if the component remounts, there are never stale duplicates.
+
     useEffect(() => {
         if (!router.isReady) return;
 
@@ -60,10 +52,6 @@ export default function RoomPage() {
 
         const socket = getSocket();
 
-        // ── Define all handlers as named functions so we can remove them ────────
-        // Using anonymous functions in socket.on() is the #1 cause of memory leaks
-        // because socket.off() can't match them. We define them here and pass the
-        // same reference to both .on() and .off().
 
         function onConnect() {
             setConnectionStatus("connected");
@@ -72,7 +60,6 @@ export default function RoomPage() {
 
         function onDisconnect(reason) {
             setConnectionStatus("disconnected");
-            // Don't show a notification for intentional client-side disconnects
             if (reason !== "io client disconnect") {
                 showNotification("Connection lost. Reconnecting...", "error");
             }
@@ -80,7 +67,6 @@ export default function RoomPage() {
 
         function onReconnect() {
             setConnectionStatus("connected");
-            // Re-join the room after reconnection — the server cleared our slot
             socket.emit("join-room", { roomId, role });
             showNotification("Reconnected to session", "success");
         }
@@ -112,24 +98,18 @@ export default function RoomPage() {
             setRoomPresence(presence);
             if (presence.trackerConnected) {
                 setTrackerDisconnectedAlert(false);
-                // Tracker came back online — restore the HUD status to connected
                 setConnectionStatus("connected");
             }
         }
 
         function onTrackerDisconnected() {
             setTrackerDisconnectedAlert(true);
-            // Only update the HUD status if this client is the Tracked user.
-            // The Tracked user's own socket is still alive — but from their
-            // perspective the session is broken, so we surface it as "TRACKER OFFLINE"
-            // rather than the misleading "CONNECTED" green indicator.
             if (role === "tracked") {
                 setConnectionStatus("tracker-offline");
             }
             showNotification("Tracker disconnected — map frozen at last position", "warning");
         }
 
-        // ── Register all listeners ───────────────────────────────────────────────
         socket.on("connect", onConnect);
         socket.on("disconnect", onDisconnect);
         socket.on("reconnect", onReconnect);
@@ -139,15 +119,10 @@ export default function RoomPage() {
         socket.on("room-presence", onRoomPresence);
         socket.on("tracker-disconnected", onTrackerDisconnected);
 
-        // If already connected when this effect runs, join immediately
         if (socket.connected) {
             onConnect();
         }
 
-        // ── Cleanup: remove every listener by exact reference ───────────────────
-        // This runs when the component unmounts OR when router.isReady changes.
-        // Because we pass the same named function references that we passed to
-        // .on(), Socket.io can find and remove them precisely — zero leaks.
         return () => {
             socket.off("connect", onConnect);
             socket.off("disconnect", onDisconnect);
@@ -159,20 +134,14 @@ export default function RoomPage() {
             socket.off("tracker-disconnected", onTrackerDisconnected);
             clearTimeout(notifTimerRef.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router.isReady]);
-    // ^^^ Intentionally only [router.isReady] — we don't want this to re-run
-    // when showNotification changes (it's stable via useCallback anyway).
-    // Re-running on every render would re-register listeners unnecessarily.
 
-    // ─── Tracker map move handler ─────────────────────────────────────────────
     const handleMapMove = useCallback((state) => {
         const socket = getSocket();
         setMapState(state);
         socket.emit("map-update", state);
     }, []);
 
-    // ─── Re-Sync button ────────────────────────────────────────────────────────
     const handleReSync = useCallback(() => {
         const socket = getSocket();
         setIsSynced(false);
@@ -180,7 +149,6 @@ export default function RoomPage() {
         showNotification("Re-syncing to Tracker...", "info");
     }, [showNotification]);
 
-    // ─── Copy session ID ──────────────────────────────────────────────────────
     const handleCopyId = useCallback(() => {
         const id = router.query?.roomId || "";
         navigator.clipboard.writeText(id).then(() => {
@@ -193,7 +161,6 @@ export default function RoomPage() {
         router.push("/");
     }, [router]);
 
-    // ─── Wait for router ──────────────────────────────────────────────────────
     if (!router.isReady) {
         return (
             <div style={{ width: "100vw", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-deep)" }}>
@@ -231,9 +198,7 @@ export default function RoomPage() {
             </Head>
 
             <div style={styles.root}>
-                {/* ── Top Header Bar ── */}
                 <header style={{ ...styles.topBar, borderBottomColor: `${accentColor}44` }}>
-                    {/* Left: Logo + Session ID */}
                     <div style={styles.topBarLeft}>
                         <button style={styles.logoBtn} onClick={handleLeave} aria-label="Return home">
                             <span style={styles.logoText}>GEO<span style={{ color: accentColor }}>·</span>SYNC</span>
@@ -247,7 +212,6 @@ export default function RoomPage() {
                         </div>
                     </div>
 
-                    {/* Center: Role Badge — hidden on very small screens */}
                     <div style={styles.topBarCenter}>
                         <RoleBadge
                             role={currentRole}
@@ -256,7 +220,6 @@ export default function RoomPage() {
                         />
                     </div>
 
-                    {/* Right: Actions */}
                     <div style={styles.topBarRight}>
                         {!isTracker && (
                             <button
@@ -275,7 +238,6 @@ export default function RoomPage() {
                     </div>
                 </header>
 
-                {/* ── Map Container ── */}
                 <main style={styles.mapContainer}>
                     <MapView
                         role={currentRole}
@@ -283,7 +245,6 @@ export default function RoomPage() {
                         syncTarget={!isTracker ? syncTarget : undefined}
                     />
 
-                    {/* HUD — bottom left */}
                     <div style={styles.hudWrapper}>
                         <HUD
                             mapState={mapState}
@@ -294,7 +255,6 @@ export default function RoomPage() {
                         />
                     </div>
 
-                    {/* Tracker first-load instruction */}
                     {isTracker && !mapState && connectionStatus === "connected" && (
                         <div style={styles.instructionOverlay}>
                             <div style={styles.instructionBox}>
@@ -307,7 +267,6 @@ export default function RoomPage() {
                         </div>
                     )}
 
-                    {/* Tracker disconnected banner */}
                     {trackerDisconnectedAlert && !isTracker && (
                         <div style={styles.alertBanner} role="alert">
                             <span style={{ color: "var(--accent-red)" }}>⚠</span>
@@ -316,25 +275,21 @@ export default function RoomPage() {
                         </div>
                     )}
 
-                    {/* De-synced badge */}
                     {!isTracker && !isSynced && (
                         <div style={styles.deSyncedBadge}>
                             ⚠ DE-SYNCED — press RE-SYNC to snap back
                         </div>
                     )}
 
-                    {/* Toast notification */}
                     {notification && (
                         <div style={{ ...styles.toast, borderColor: toastColor(notification.type), color: toastColor(notification.type) }} role="status">
                             {notification.msg}
                         </div>
                     )}
 
-                    {/* Role accent border */}
                     <div style={{ ...styles.mapBorder, borderColor: `${accentColor}22` }} aria-hidden="true" />
                 </main>
 
-                {/* ── Bottom Status Bar ── */}
                 <footer style={styles.bottomBar}>
                     <div style={styles.bottomLeft}>
                         <span style={{
@@ -422,7 +377,6 @@ const styles = {
         overflow: "hidden",
     },
 
-    // ── Header ──
     topBar: {
         display: "flex",
         alignItems: "center",
@@ -538,12 +492,11 @@ const styles = {
     btnIcon: { fontSize: 12, lineHeight: 1 },
     btnLabel: { className: "btn-label" },
 
-    // ── Map ──
     mapContainer: {
         position: "relative",
         flex: 1,
         overflow: "hidden",
-        minHeight: 0, // critical for flex children to not overflow
+        minHeight: 0,
     },
     mapBorder: {
         position: "absolute",
@@ -561,7 +514,6 @@ const styles = {
         className: "hud-wrapper",
     },
 
-    // ── Overlays ──
     instructionOverlay: {
         position: "absolute",
         inset: 0,
@@ -661,7 +613,6 @@ const styles = {
         whiteSpace: "nowrap",
     },
 
-    // ── Footer ──
     bottomBar: {
         display: "flex",
         alignItems: "center",

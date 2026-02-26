@@ -41,10 +41,6 @@ export default function MapView({ role, onMapMove, syncTarget }) {
     const lastEmit = useRef(0);
     const isSyncing = useRef(false);
 
-    // ─── FIX 1: Stale frame prevention ───────────────────────────────────────
-    // pendingSync always holds the LATEST incoming state.
-    // rafId ensures we only apply it once per animation frame — skipping
-    // any intermediate states that arrived while the frame was pending.
     const pendingSync = useRef(null);
     const rafId = useRef(null);
 
@@ -59,11 +55,9 @@ export default function MapView({ role, onMapMove, syncTarget }) {
 
     const onUnmount = useCallback(() => {
         mapRef.current = null;
-        // Cancel any pending animation frame on unmount
         if (rafId.current) cancelAnimationFrame(rafId.current);
     }, []);
 
-    // ─── Tracker: emit on center/zoom change (50ms throttle) ─────────────────
     const emitState = useCallback(() => {
         if (!mapRef.current || role !== "tracker" || isSyncing.current) return;
         const now = Date.now();
@@ -75,21 +69,13 @@ export default function MapView({ role, onMapMove, syncTarget }) {
         onMapMove?.({ lat: center.lat(), lng: center.lng(), zoom });
     }, [role, onMapMove]);
 
-    // ─── FIX 2: Atomic pan+zoom in a single rAF ───────────────────────────────
-    // Instead of calling panTo() then setZoom() separately (which causes a
-    // visible two-step jump), we batch them inside one requestAnimationFrame.
-    // We also only ever apply the LATEST pending state — if 5 updates arrive
-    // before the next frame, we skip 4 of them and only render the freshest one.
     useEffect(() => {
         if (!syncTarget || role !== "tracked") return;
 
-        // Overwrite pendingSync with the latest state — older ones are discarded
         pendingSync.current = syncTarget;
 
-        // Cancel any already-scheduled frame (it would apply a stale state)
         if (rafId.current) cancelAnimationFrame(rafId.current);
 
-        // Schedule exactly one frame to apply the latest state
         rafId.current = requestAnimationFrame(() => {
             const map = mapRef.current;
             const state = pendingSync.current;
@@ -97,22 +83,15 @@ export default function MapView({ role, onMapMove, syncTarget }) {
 
             isSyncing.current = true;
 
-            // ── The key fix: move center AND zoom atomically ──
-            // moveCamera() is the only Google Maps API call that updates
-            // center + zoom + tilt + heading in a single render pass —
-            // no two-step jump, no intermediate frames.
             if (map.moveCamera) {
                 map.moveCamera({
                     center: { lat: state.lat, lng: state.lng },
                     zoom: state.zoom,
                 });
             } else {
-                // Fallback for older API versions that don't have moveCamera
                 map.setCenter({ lat: state.lat, lng: state.lng });
                 map.setZoom(state.zoom);
             }
-
-            // Release the syncing lock after the map settles
             setTimeout(() => {
                 isSyncing.current = false;
             }, 100);
