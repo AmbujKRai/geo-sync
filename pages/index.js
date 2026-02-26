@@ -253,7 +253,7 @@ export default function Home() {
                         <div style={{ ...styles.roleInfoBlock, borderColor: "rgba(0,255,136,0.3)" }}>
                             <div style={{ color: "var(--tracked-color)", fontSize: 11, marginBottom: 4 }}>◉ TRACKED</div>
                             <p style={{ color: "var(--text-secondary)", fontSize: 11, lineHeight: 1.5 }}>
-                                Map stays synchronized to the Tracker's view. Use Re-Sync button if view drifts. Manual moves don't override Tracker.
+                                Map stays synchronized to the Tracker&apos;s view. Use Re-Sync button if view drifts. Manual moves don&apos;t override Tracker.
                             </p>
                         </div>
                     </div>
